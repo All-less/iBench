@@ -1,22 +1,22 @@
 /** $lic$
  * Copyright (C) 2016-2017 by The Board of Trustees of Cornell University
  * Copyright (C) 2013-2016 by The Board of Trustees of Stanford University
- *    
- * This file is part of iBench. 
- *    
+ *
+ * This file is part of iBench.
+ *
  * iBench is free software; you can redistribute it and/or modify it under the
  * terms of the Modified BSD-3 License as published by the Open Source Initiative.
- *    
+ *
  * If you use this software in your research, we request that you reference
- * the iBench paper ("iBench: Quantifying Interference for Datacenter Applications", 
- * Delimitrou and Kozyrakis, IISWC'13, September 2013) as the source of the benchmark 
+ * the iBench paper ("iBench: Quantifying Interference for Datacenter Applications",
+ * Delimitrou and Kozyrakis, IISWC'13, September 2013) as the source of the benchmark
  * suite in any publications that use this software, and that
  * you send us a citation of your work.
- *    
+ *
  * iBench is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the BSD-3 License for more details.
- *    
+ *
  * You should have received a copy of the Modified BSD-3 License along with
  * this program. If not, see <https://opensource.org/licenses/BSD-3-Clause>.
  **/
@@ -65,14 +65,14 @@ long long int memory_size_kb(void) {
 		if (strstr(line, "MemTotal")) {
 			char* colStr;
 			colStr = strstr(line, ":");
-			remove_all_chars(colStr, ':'); 
-			remove_all_chars(colStr, 'k'); 
+			remove_all_chars(colStr, ':');
+			remove_all_chars(colStr, 'k');
 			remove_all_chars(colStr, 'B');
 			remove_all_chars(colStr, ' ');
 			column = atoi(colStr);
-		        column = 1000*column;	
+		        column = 1000*column;
 			fclose(meminfo);
-			return column; 
+			return column;
 		}
 	}
 	fclose(meminfo);
@@ -83,24 +83,29 @@ int main(int argc, char **argv) {
 	timespec sleepValue = {0};
 
 	char* volatile block;
-	long long int MEMORY_SIZE = memory_size_kb(); 
+	long long int MEMORY_SIZE = memory_size_kb();
 	printf("Total Memory Size: %llu\n", MEMORY_SIZE);
 
-	/*Usage: ./memCap <duration in sec>*/
-	if (argc < 2) { 
-		printf("Usage: ./cap_mem <duration in sec>\n"); 
-		exit(0); 
-	}	
+	/*Usage: ./memCap <duration in sec> <cap size in KB> */
+	if (argc < 3) {
+		printf("Usage: ./memCap <duration in sec> <cap size in KB>\n");
+		exit(0);
+	}
+	long long int capSize = atoll(argv[2]);
+	if (capSize > MEMORY_SIZE) {
+		capSize = MEMORY_SIZE;
+		printf("Using %lld as cap size instead.\n", capSize);
+	}
 	block = (char*)mmap(NULL, MEMORY_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 
 	int usr_timer = atoi(argv[1]);
-	double time_spent = 0.0; 
+	double time_spent = 0.0;
   	clock_t begin, end;
 
 
 	while (time_spent < usr_timer) {
   		begin = clock();
-		memcpy(block, block+MEMORY_SIZE/2, MEMORY_SIZE/2);
+		memcpy(block, block + capSize / 2, capSize / 2);
 		//sleepValue.tv_nsec = (usr_timer-getNs())/usr_timer;
 		//nanosleep(&sleepValue, NULL);
 		end = clock();
