@@ -39,18 +39,23 @@ int main(int argc, const char** argv) {
 	uint32_t maxThreads = omp_get_num_procs();
 
 	if (argc < 3) {
-		printf("Usage: ./cpu <duration in sec> <num of threads>\n");
+		printf("Usage: ./cpu <duration in sec> <num of threads> <init num of threads>\n");
 		exit(0);
 	}
-	uint32_t numThreads = atoi(argv[2])
+	uint32_t numThreads = atoi(argv[2]);
 	if (numThreads > maxThreads) {
 		numThreads = maxThreads;
-		printf("Clipped to maximum threads number %u.\n", numThreads);
+		printf("Using to processor number %u instead.\n", numThreads);
 	}
 
-	uint64_t nsPerRun = NS_PER_S * atoi(argv[1]) / numThreads;  // ns
+	uint32_t initNum = 1;
+	if (argc >= 3) {
+		initNum = atoi(argv[3]);
+		printf("Starting with %u threads.\n", initNum);
+	}
+	uint64_t nsPerRun = NS_PER_S * atoi(argv[1]) / (numThreads - initNum + 1);  // ns
 
-	for (uint32_t threads = 1; threads <= numThreads; threads++) {
+	for (uint32_t threads = initNum; threads <= numThreads; threads++) {
 		printf("Running with %d threads\n", threads);
 		omp_set_num_threads(threads);
 		//uint64_t endNs = pi*getNs() + nsPerRun;
